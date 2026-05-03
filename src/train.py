@@ -49,6 +49,7 @@ def train_model():
     task = get_task_components()
     model = task["get_model"]()
 
+    mlflow.set_tracking_uri("file:./mlruns")
     mlflow.set_experiment(EXPERIMENT_NAMES[MODEL_TYPE])
 
     with mlflow.start_run():
