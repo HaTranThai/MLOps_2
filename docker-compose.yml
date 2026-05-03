@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  trainer:
+    build: .
+    container_name: mlops-full-trainer
+    command: sh -c "python src/data_preprocessing.py && python src/train.py"
+    environment:
+      - MODEL_TYPE=${MODEL_TYPE:-classification}
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+
+  api:
+    build: .
+    container_name: mlops-full-api
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    environment:
+      - MODEL_TYPE=${MODEL_TYPE:-classification}
+      - PYTHONPATH=/app
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      trainer:
+        condition: service_completed_successfully
+
+  ui:
+    build: .
+    container_name: mlops-full-ui
+    command: streamlit run app/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    environment:
+      - MODEL_TYPE=${MODEL_TYPE:-classification}
+      - PYTHONPATH=/app
+      - API_URL=http://api:8000/predict
+    volumes:
+      - .:/app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
