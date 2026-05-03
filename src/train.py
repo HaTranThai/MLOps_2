@@ -5,7 +5,15 @@ import mlflow
 import mlflow.sklearn
 import pandas as pd
 
-from src.config import EXPERIMENT_NAMES, MODEL_PATHS, MODEL_TYPE, PROCESSED_DATA_DIRS
+from src.config import (
+    MODEL_TYPE,
+    MODEL_PATHS,
+    EXPERIMENT_NAMES,
+    REGISTERED_MODEL_NAMES,
+    MLFLOW_TRACKING_URI,
+    MODEL_ALIAS,
+    PROCESSED_DATA_DIRS
+)
 from src.tasks import get_task_components
 
 
@@ -49,7 +57,7 @@ def train_model():
     task = get_task_components()
     model = task["get_model"]()
 
-    mlflow.set_tracking_uri("file:./mlruns")
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
     mlflow.set_experiment(EXPERIMENT_NAMES[MODEL_TYPE])
 
     with mlflow.start_run():
@@ -70,7 +78,11 @@ def train_model():
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
 
         joblib.dump(model, model_path)
-        mlflow.sklearn.log_model(model, "model")
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path="model",
+            registered_model_name="registered_model_name"
+        )
 
         print(f"Training completed for MODEL_TYPE={MODEL_TYPE}")
         print("Metrics:")

@@ -1,26 +1,23 @@
 import os
-
-import pandas as pd
-import requests
 import streamlit as st
-from dotenv import load_dotenv
-
-
-load_dotenv()
+import requests
+import pandas as pd
 
 MODEL_TYPE = os.getenv("MODEL_TYPE", "classification")
-API_URL = os.getenv("API_URL", "http://localhost:8000/predict")
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000/predict")
 
 
 st.set_page_config(
     page_title="MLOps Multi-Task UI",
-    page_icon=":bar_chart:",
-    layout="centered",
+    page_icon="🤖",
+    layout="centered"
 )
 
-st.title("MLOps Multi-Task Prediction App")
+st.title("🤖 MLOps Multi-Task Prediction App")
 
-st.write(f"Current model type: **{MODEL_TYPE}**")
+st.write(f"Model type hiện tại: **{MODEL_TYPE}**")
+
+st.info("FastAPI sẽ load model từ MLflow Model Registry bằng alias `champion`.")
 
 st.divider()
 
@@ -34,7 +31,7 @@ def get_input_features():
         return {
             "feature_1": feature_1,
             "feature_2": feature_2,
-            "feature_3": feature_3,
+            "feature_3": feature_3
         }
 
     if MODEL_TYPE == "time_series":
@@ -45,33 +42,38 @@ def get_input_features():
         return {
             "lag_1": lag_1,
             "lag_2": lag_2,
-            "lag_3": lag_3,
+            "lag_3": lag_3
         }
 
-    st.error("Invalid MODEL_TYPE.")
+    st.error("MODEL_TYPE không hợp lệ.")
     return {}
 
 
 features = get_input_features()
 
-st.subheader("Input Data")
+st.subheader("Dữ liệu đầu vào")
 st.dataframe(pd.DataFrame([features]))
 
-if st.button("Predict"):
+if st.button("Dự đoán"):
     payload = {
-        "features": features,
+        "features": features
     }
 
     try:
-        response = requests.post(API_URL, json=payload, timeout=10)
+        response = requests.post(API_URL, json=payload)
 
         if response.status_code == 200:
             result = response.json()
 
-            st.subheader("Result")
+            st.subheader("Kết quả")
             st.success(result)
+
+            if "model_uri" in result:
+                st.caption(f"Model URI: {result['model_uri']}")
+
         else:
-            st.error("API returned an error.")
-            st.write(response.text)
+            st.error("API trả về lỗi.")
+            st.code(response.text)
+
     except requests.exceptions.ConnectionError:
-        st.error("Could not connect to FastAPI.")
+        st.error("Không kết nối được đến FastAPI.")
